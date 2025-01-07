@@ -87,7 +87,6 @@
     <section class="container">
         <section class="tree-container">
             <svg width="800" height="600">
-                <!-- D3 svg will be appended here -->
                 <g class="tree-group" transform="translate(300, 50)"></g>
             </svg>
         </section>
@@ -106,5 +105,205 @@
         </section>
     </section>
 
+    <script>
+        const width = 800, height = 600;
+        const svg = d3.select("svg"),
+              g = svg.select(".tree-group");
+
+        const zoom = d3.zoom()
+            .scaleExtent([0.25, 4])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        let data = ["Start", "Node 1", "Node 2", "Node 3", "Node 4", "Node 5", "Node 6"];
+        let nodeCount = data.length;
+
+        // Function to zoom and center the view on a specific node
+        function zoomToNode(d) {
+            const scale = 2;
+            const translateX = width / 2 - d.x * scale;
+            const translateY = height / 2 - d.y * scale;
+            svg.transition().duration(1000)
+                .call(zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
+            }
+
+        function zoomToCircle(x, y) {
+            const scale = 2; 
+            const translateX = width / 2 - x * scale;
+            const translateY = height / 2 - y * scale;
+
+            svg.transition().duration(1000)
+                .call(zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
+        }
+
+        // Focus on Node 3
+        document.getElementById("focus").onclick = () => {
+            const targetNode = g.selectAll(".node").data()[2];
+            if (targetNode) {
+                const nodeElement = g.selectAll(".node").filter(d => d.data.name === targetNode.data.name);
+                nodeElement.node().focus();
+
+                svg.transition().duration(1000)
+                    .call(zoom.transform, d3.zoomIdentity.translate(width / 2 - targetNode.x * 2, height / 2 - targetNode.y * 2).scale(2));
+            }
+        };
+
+        // Function to update the graph
+        function updateTree() {
+            const root = d3.hierarchy({ name: data[0], children: data.slice(1).map(name => ({ name })) });
+
+            const tree = d3.tree().size([width, height - 200]);
+            const treeData = tree(root);
+
+            treeData.descendants().forEach((d, i) => {
+                d.x = width / 2;
+                d.y = i * 100;
+            });
+
+            // Update branches
+            const link = g.selectAll(".branch").data(treeData.links(), d => d.target.data.name);
+            link.enter().append("path")
+                .attr("class", "branch")
+                .merge(link)
+                .attr("d", d => {
+                    return `M${d.source.x},${d.source.y}
+                            C${d.source.x},${(d.source.y + d.target.y) / 2}
+                             ${d.target.x},${(d.source.y + d.target.y) / 2}
+                             ${d.target.x},${d.target.y}`;
+                });
+
+            link.exit().remove();
+
+            // Update Nodes
+            const node = g.selectAll(".node").data(treeData.descendants(), d => d.data.name);
+            const nodeEnter = node.enter().append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.x}, ${d.y})`)
+                .on("click", (event, d) => alert(`Edit ${d.data.name}`))
+                .on("focus", (event, d) => {
+                    zoomToNode(d);
+                });
+
+            nodeEnter.filter(d => d.data.name === "Start")
+                .attr("class", "root-node")
+                .append("circle")
+                .attr("r", 30)
+                .attr("tabindex", 1);
+
+            nodeEnter.filter(d => d.data.name === "Start")
+                .append("text")
+                .attr("dy", ".35em")
+                .text(d => d.data.name);
+
+            let nodeTabIndex = 3;
+            let circleTabIndex = 2;
+
+            nodeEnter.filter(d => d.data.name !== "Start")
+                .append("rect")
+                .attr("width", 100)
+                .attr("height", 40)
+                .attr("x", -50)
+                .attr("y", -20)
+                .attr("tabindex", () => nodeTabIndex += 2);
+
+            nodeEnter.filter(d => d.data.name !== "Start")
+                .append("text")
+                .attr("dy", ".35em")
+                .text(d => d.data.name);
+
+            node.merge(nodeEnter)
+                .transition()
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+            node.exit().remove();
+
+            // Update "Add Node" Circles
+            const verticalOffset = 50;
+            const addCircle = g.selectAll(".add-node-circle").data(treeData.links(), d => d.target.data.name);
+            addCircle.enter().append("circle")
+                .attr("class", "add-node-circle")
+                .merge(addCircle)
+                .attr("cx", d => (d.source.x + d.target.x) / 2)
+                .attr("cy", d => {
+                    const midY = (d.source.y + d.target.y) / 2;
+                    const doubleDistance = 2 * (midY - d.source.y);
+                    return d.source.y + doubleDistance - verticalOffset;
+                })
+                .attr("r", 6)
+                .attr("tabindex", () => circleTabIndex += 2)
+                .on("click", (event, d) => alert("Add new node"))
+                .on("focus", (event, d) => {
+                    const circleX = (d.source.x + d.target.x) / 2;
+                    const midY = (d.source.y + d.target.y) / 2;
+                    const doubleDistance = 2 * (midY - d.source.y);
+                    const circleY = d.source.y + doubleDistance - verticalOffset;
+                    zoomToCircle(circleX, circleY);
+                });
+
+            addCircle.exit().remove();
+        }
+
+        // Adding nodes
+        document.getElementById("add-node").onclick = () => {
+            nodeCount++;
+            data.push(`Node ${nodeCount}`);
+            updateTree();
+
+            const newNode = g.selectAll(".node").data()[nodeCount - 1];
+            const newNodeElement = g.selectAll(".node").filter(d => d.data.name === newNode.data.name);
+            newNodeElement.node().focus();
+
+            zoomToNode(newNode); 
+        };
+
+        // Removing nodes
+        document.getElementById("remove-node").onclick = () => {
+            if (data.length > 1) {
+                data.pop();
+                nodeCount--;
+                updateTree();
+
+                const highestNode = data.slice(1)
+                    .map(d => g.selectAll(".node").data().find(node => node.data.name === d))
+                    .reduce((maxNode, currentNode) => currentNode.data.name > maxNode.data.name ? currentNode : maxNode, {});
+
+                zoomToNode(highestNode);
+            } else {
+                alert("Cannot remove the root node.");
+            }
+        };
+
+        // Zoom, Focus, and Other Controls
+        document.getElementById("zoom-in").onclick = () => svg.transition().call(zoom.scaleBy, 1.5);
+        document.getElementById("zoom-out").onclick = () => svg.transition().call(zoom.scaleBy, 0.5);
+        document.getElementById("view-all").onclick = () => {
+            const bounds = g.node().getBBox();
+            const dx = bounds.width,
+                  dy = bounds.height,
+                  x = bounds.x,
+                  y = bounds.y;
+
+            const scale = Math.max(0.5, Math.min(3, 0.9 / Math.max(dx / width, dy / height)));
+            const translate = [width / 2 - scale * (x + dx / 2), height / 2 - scale * (y + dy / 2)];
+
+            svg.transition().duration(1000).call(
+                zoom.transform,
+                d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+            );
+        };
+
+        document.getElementById("reset-view").onclick = () => {
+            const scale = 2;
+            const translateX = width / 2 - width / 2 * scale;
+            const translateY = height / 2 - height * 0.2 * scale;
+            svg.transition().duration(1000).call(zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
+        };
+
+        updateTree();
+        document.getElementById("reset-view").click(); // Automatically reset the view on first load
+    </script>
 </body>
 </html>
