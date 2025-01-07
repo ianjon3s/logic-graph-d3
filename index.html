@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive logic graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .controls {
+            width: 260px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            font-family: Inter, Arial, Helvetica, sans-serif;
+        }
+        .controls button {
+            margin: 10px 2px;
+            display: inline-block;
+            outline: none;
+            cursor: pointer;
+            font-weight: 500;
+            border: 1px solid #aaa;
+            border-radius: 0;
+            height: 36px;
+            line-height: 34px;
+            font-size: 14px;
+            color: #111;
+            background-color: #eee;
+            padding: 0 14px;
+        }
+        .tree-container {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+            overflow: hidden;
+        }
+        .node rect {
+            fill: white;
+            stroke: black;
+            stroke-width: 1.5px;
+            cursor: pointer;
+        }
+        .node text {
+            font-size: 15px;
+            text-anchor: middle;
+            font-family: Inter, Arial, Helvetica, sans-serif;
+            cursor: pointer;
+        }
+        .branch {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+        .add-node-circle {
+            fill: white;
+            stroke: black;
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+        .add-node-circle:focus {
+            border-radius: 50%;
+        }
+        .root-node circle {
+            fill: black;
+            stroke: black;
+            stroke-width: 2px;
+        }
+        .root-node text {
+            fill: white;
+            font-family: Inter, Arial, Helvetica, sans-serif;
+            text-anchor: middle;
+        }
+        :focus {
+            outline: 3px solid #ffcc00;
+        }
+    </style>
+</head>
+<body>
+    <section class="container">
+        <section class="tree-container">
+            <svg width="800" height="600">
+                <!-- D3 svg will be appended here -->
+                <g class="tree-group" transform="translate(300, 50)"></g>
+            </svg>
+        </section>
+        <section class="controls">
+            <button id="view-all">View All Nodes</button>
+            <div>
+                <button id="zoom-in">Zoom In</button>
+            <button id="zoom-out">Zoom Out</button>
+            </div>
+            <button id="reset-view">Reset View</button>
+            <button id="focus">Focus on Node 3</button>
+            <div>
+                <button id="add-node">Add Node</button>
+                <button id="remove-node">Remove Node</button>
+            </div>
+        </section>
+    </section>
+
+</body>
+</html>
