@@ -87,6 +87,12 @@
     <section class="container">
         <section class="tree-container">
             <svg width="800" height="600">
+                <defs>
+                    <pattern id="dotPattern" patternUnits="userSpaceOnUse" width="16" height="16">
+                        <circle cx="8" cy="8" r="0.8" fill="#aaa" />
+                    </pattern>
+                </defs>
+                <rect class="background" x="-5000" y="-5000" width="10000" height="10000" fill="url(#dotPattern)" />
                 <g class="tree-group" transform="translate(300, 50)"></g>
             </svg>
         </section>
@@ -111,10 +117,13 @@
               g = svg.select(".tree-group");
 
         const zoom = d3.zoom()
-            .scaleExtent([0.25, 4])
-            .on("zoom", (event) => {
-                g.attr("transform", event.transform);
-            });
+        .scaleExtent([0.25, 4])
+        .on("zoom", (event) => {
+            const transform = event.transform;
+            g.attr("transform", transform);
+            d3.select(".background")
+                .attr("transform", `translate(${transform.x},${transform.y}) scale(${transform.k})`);
+        });
 
         svg.call(zoom);
 
