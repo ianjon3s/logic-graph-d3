@@ -190,6 +190,7 @@
             const node = g.selectAll(".node").data(treeData.descendants(), d => d.data.name);
             const nodeEnter = node.enter().append("g")
                 .attr("class", "node")
+                .attr("aria-label", d => d.data.name)
                 .attr("transform", d => `translate(${d.x}, ${d.y})`)
                 .on("click", (event, d) => alert(`Edit ${d.data.name}`))
                 .on("focus", (event, d) => {
